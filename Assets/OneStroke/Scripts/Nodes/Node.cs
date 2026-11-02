@@ -18,35 +18,34 @@ public class Node : MonoBehaviour
         nodeRenderer = GetComponent<Renderer>();
 
         if (inactiveMaterial != null)
-        {
             nodeRenderer.material = inactiveMaterial;
-        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        // Player以外との接触は無視
         if (other.GetComponent<CharacterController>() == null)
             return;
 
-        Activate();
+        // 点灯済みでもNodeManagerへ通知する
+        NodeManager.Instance?.OnNodeTouched(this);
     }
 
     public void Activate()
     {
-        // すでに点灯している場合は何もしない
         if (isActivated)
             return;
 
         isActivated = true;
 
         if (activeMaterial != null)
-        {
             nodeRenderer.material = activeMaterial;
-        }
+    }
 
-        NodeManager.Instance?.RegisterNode(this);
+    public void ResetNode()
+    {
+        isActivated = false;
 
-        Debug.Log($"Node activated: {gameObject.name}");
+        if (inactiveMaterial != null)
+            nodeRenderer.material = inactiveMaterial;
     }
 }
