@@ -18,15 +18,14 @@ public class Node : MonoBehaviour
         nodeRenderer = GetComponent<Renderer>();
 
         if (inactiveMaterial != null)
+        {
             nodeRenderer.material = inactiveMaterial;
+        }
     }
 
-    private void OnTriggerEnter(Collider other)
+    // Node‚Ì‹N“®‚ğNodeManager‚ÉˆË—Š
+    public void Interact()
     {
-        if (other.GetComponent<CharacterController>() == null)
-            return;
-
-        // “_“”Ï‚İ‚Å‚àNodeManager‚Ö’Ê’m‚·‚é
         NodeManager.Instance?.OnNodeTouched(this);
     }
 
@@ -38,7 +37,9 @@ public class Node : MonoBehaviour
         isActivated = true;
 
         if (activeMaterial != null)
+        {
             nodeRenderer.material = activeMaterial;
+        }
     }
 
     public void ResetNode()
@@ -46,6 +47,8 @@ public class Node : MonoBehaviour
         isActivated = false;
 
         if (inactiveMaterial != null)
+        {
             nodeRenderer.material = inactiveMaterial;
+        }
     }
 }

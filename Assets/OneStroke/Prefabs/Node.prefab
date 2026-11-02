@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 4606812954055798461}
   - component: {fileID: 7609485730121556795}
   - component: {fileID: 2384472163719386709}
+  - component: {fileID: 5784715019129289973}
   m_Layer: 0
   m_Name: Node
   m_TagString: Untagged
@@ -155,3 +156,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Node
   inactiveMaterial: {fileID: 2100000, guid: 55ebb909a1713d64f92a3eccab6dba91, type: 2}
   activeMaterial: {fileID: 2100000, guid: f8334df34b93690498544226f384b7d4, type: 2}
+--- !u!114 &5784715019129289973
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5263880907233900480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 176f0b5def4a3514e8964a4131ad1831, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NodeAppearance
+  visibleDuration: 10
+  minHiddenDuration: 1
+  maxHiddenDuration: 5
