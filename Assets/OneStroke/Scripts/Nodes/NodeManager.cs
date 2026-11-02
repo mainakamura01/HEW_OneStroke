@@ -10,6 +10,7 @@ public class NodeManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private LineManager lineManager;
     [SerializeField] private ShapeVisualizer shapeVisualizer;
+    [SerializeField] private TriangleDamage triangleDamage;
 
     [Header("Shape Settings")]
     [SerializeField] private int minimumNodes = 3;
@@ -98,6 +99,17 @@ public class NodeManager : MonoBehaviour
 
             Debug.Log("Triangle visualization created!");
         }
+
+        // OŠpŒ`‚Ì“à‘¤‚É‚¢‚é“G‚ğUŒ‚
+        if (activatedNodes.Count == 3 && triangleDamage != null)
+        {
+            triangleDamage.Attack(
+                activatedNodes[0],
+                activatedNodes[1],
+                activatedNodes[2]
+            );
+        }
+
         else
         {
             Debug.LogWarning(
