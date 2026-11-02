@@ -25,19 +25,46 @@ public class PlayerMovement : MonoBehaviour
         HandleRotation();
     }
 
+
     private void HandleMovement()
     {
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
 
-        moveDirection = new Vector3(horizontal, 0f, vertical);
-        moveDirection = Vector3.ClampMagnitude(moveDirection, 1f);
+        Vector3 inputDirection =
+            new Vector3(horizontal, 0f, vertical);
+
+        inputDirection = Vector3.ClampMagnitude(
+            inputDirection, 1f
+        );
+
+        Transform cameraTransform = Camera.main.transform;
+
+        Vector3 cameraForward = cameraTransform.forward;
+        Vector3 cameraRight = cameraTransform.right;
+
+        cameraForward.y = 0f;
+        cameraRight.y = 0f;
+
+        cameraForward.Normalize();
+        cameraRight.Normalize();
+
+        moveDirection =
+            cameraForward * inputDirection.z +
+            cameraRight * inputDirection.x;
+
+        moveDirection = Vector3.ClampMagnitude(
+            moveDirection, 1f
+        );
 
         bool isDashing = Input.GetKey(KeyCode.LeftShift);
         float currentSpeed = isDashing ? dashSpeed : moveSpeed;
 
-        controller.Move(moveDirection * currentSpeed * Time.deltaTime);
+        controller.Move(
+            moveDirection * currentSpeed * Time.deltaTime
+        );
     }
+
 
     private void HandleRotation()
     {
