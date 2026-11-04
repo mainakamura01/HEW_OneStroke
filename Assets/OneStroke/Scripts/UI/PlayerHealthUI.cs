@@ -30,8 +30,13 @@ public class PlayerHealthUI : MonoBehaviour
 
         if (hpFill != null)
         {
-            hpFill.fillAmount =
-                maxHP > 0 ? (float)currentHP / maxHP : 0f;
+            float hpRatio =
+            maxHP > 0 ? (float)currentHP / maxHP : 0f;
+
+            hpFill.rectTransform.SetSizeWithCurrentAnchors(
+                RectTransform.Axis.Horizontal,
+                300f * hpRatio
+            );
         }
 
         if (hpText != null)
