@@ -25,6 +25,7 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private float enhancedDuration = 60f;
 
     private bool isEnhancedWave = false;
+    public bool IsEnhancedWave => isEnhancedWave;
 
     private void Start()
     {

@@ -6,6 +6,9 @@ public class PlayerHealth : MonoBehaviour
     [Header("Health Settings")]
     [SerializeField] private int maxHP = 100;
 
+    [Header("References")]
+    [SerializeField] private GameManager gameManager;
+
     private int currentHP;
     private bool isDead = false;
 
@@ -39,6 +42,15 @@ public class PlayerHealth : MonoBehaviour
 
         Debug.Log("GAME OVER!");
 
-        // ゲームオーバー画面は後で実装
+        if (gameManager != null)
+        {
+            gameManager.EndGame("GAME OVER");
+        }
+        else
+        {
+            Debug.LogWarning(
+                "PlayerHealth: GameManager is not assigned!"
+            );
+        }
     }
 }
