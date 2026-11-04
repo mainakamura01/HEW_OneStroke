@@ -7,6 +7,10 @@ public class EnemyMovement : MonoBehaviour
     [SerializeField] private float moveSpeed = 2.0f;
     [SerializeField] private float stopDistance = 1.5f;
 
+    [Header("Separation Settings")]
+    [SerializeField] private float separationRadius = 1.5f;
+    [SerializeField] private float separationStrength = 2.0f;
+
     private Transform player;
 
     private void Start()
@@ -30,26 +34,65 @@ public class EnemyMovement : MonoBehaviour
             return;
 
         Vector3 direction = player.position - transform.position;
-
-        // 地面の上だけを移動
         direction.y = 0f;
 
         float distance = direction.magnitude;
 
-        // プレイヤーに近づきすぎないよう停止
-        if (distance <= stopDistance)
-            return;
+        // プレイヤーへの追跡方向
+        Vector3 chaseDirection = Vector3.zero;
 
-        // プレイヤーの方向へ移動
-        Vector3 moveDirection = direction.normalized;
+        if (distance > stopDistance)
+        {
+            chaseDirection = direction.normalized;
+        }
 
+        // 周囲の敵から離れる方向を計算
+        Vector3 separationDirection = Vector3.zero;
+
+        GameObject[] enemies =
+            GameObject.FindGameObjectsWithTag("Enemy");
+
+        foreach (GameObject enemy in enemies)
+        {
+            if (enemy == gameObject)
+                continue;
+
+            Vector3 away =
+                transform.position - enemy.transform.position;
+
+            away.y = 0f;
+
+            float enemyDistance = away.magnitude;
+
+            if (enemyDistance > 0.001f &&
+                enemyDistance < separationRadius)
+            {
+                // 近い敵ほど強く離れようとする
+                float weight =
+                    1f - enemyDistance / separationRadius;
+
+                separationDirection +=
+                    away.normalized * weight;
+            }
+        }
+
+        // 追跡方向と分離方向を合成
+        Vector3 moveDirection =
+            chaseDirection +
+            separationDirection * separationStrength;
+
+        moveDirection = Vector3.ClampMagnitude(moveDirection, 1f);
+
+        // プレイヤー追跡を停止していても
+        // 敵同士が近ければ離れる
         transform.position +=
             moveDirection * moveSpeed * Time.deltaTime;
 
         // 移動方向を向く
-        if (moveDirection != Vector3.zero)
+        if (moveDirection.sqrMagnitude > 0.001f)
         {
-            transform.rotation = Quaternion.LookRotation(moveDirection);
+            transform.rotation =
+                Quaternion.LookRotation(moveDirection);
         }
     }
 }
