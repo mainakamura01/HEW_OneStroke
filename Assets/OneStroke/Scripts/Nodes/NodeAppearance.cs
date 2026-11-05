@@ -10,9 +10,19 @@ public class NodeAppearance : MonoBehaviour
     [SerializeField] private float minHiddenDuration = 1f;
     [SerializeField] private float maxHiddenDuration = 5f;
 
+    [Header("Animation Settings")]
+    [SerializeField] private float appearDuration = 0.3f;
+    [SerializeField] private float disappearDuration = 0.3f;
+    [SerializeField] private float overshootScale = 1.2f;
+
+    [Header("Spawn Reference")]
+    [SerializeField] private NodeSpawnManager nodeSpawnManager;
+
     private Node node;
     private Renderer[] renderers;
     private Coroutine appearanceCoroutine;
+
+    private Vector3 originalScale;
 
     public bool IsVisible { get; private set; }
 
@@ -20,6 +30,8 @@ public class NodeAppearance : MonoBehaviour
     {
         node = GetComponent<Node>();
         renderers = GetComponentsInChildren<Renderer>();
+
+        originalScale = transform.localScale;
     }
 
     private void Start()
@@ -31,28 +43,46 @@ public class NodeAppearance : MonoBehaviour
     {
         while (true)
         {
-            // 起動済みなら表示状態を維持
+            // 選択済みなら表示を維持
             if (node.IsActivated)
             {
                 SetVisible(true);
+                transform.localScale = originalScale;
+
                 yield return null;
                 continue;
             }
 
-            // ランダムな時間だけ非表示
-            SetVisible(false);
+            // 消失アニメーション
+            yield return AnimateDisappear();
 
+            // 非表示の待機時間
             float hiddenTime = Random.Range(
                 minHiddenDuration,
                 maxHiddenDuration
             );
 
+
             yield return new WaitForSeconds(hiddenTime);
 
-            // 青いNodeを表示
-            SetVisible(true);
+            // 非表示の間に新しい位置へ移動
+            if (!node.IsActivated && nodeSpawnManager != null)
+            {
+                nodeSpawnManager.TryMoveNode(this);
+            }
 
-            // 10秒間表示する
+            if (node.IsActivated)
+            {
+                SetVisible(true);
+                transform.localScale = originalScale;
+                continue;
+            }
+
+            // 出現アニメーション
+            yield return AnimateAppear();
+
+
+            // 表示時間
             float timer = 0f;
 
             while (timer < visibleDuration)
@@ -63,9 +93,95 @@ public class NodeAppearance : MonoBehaviour
                 timer += Time.deltaTime;
                 yield return null;
             }
-
-            // 起動済みなら次のループで固定表示
         }
+    }
+
+    private IEnumerator AnimateAppear()
+    {
+        SetVisible(true);
+
+        float elapsed = 0f;
+
+        while (elapsed < appearDuration)
+        {
+            if (node.IsActivated)
+            {
+                transform.localScale = originalScale;
+                yield break;
+            }
+
+            elapsed += Time.deltaTime;
+
+            float t = Mathf.Clamp01(
+                elapsed / Mathf.Max(0.01f, appearDuration)
+            );
+
+            // 途中で少し大きくなって戻る
+            float scale;
+
+            if (t < 0.7f)
+            {
+                scale = Mathf.Lerp(
+                    0f,
+                    overshootScale,
+                    t / 0.7f
+                );
+            }
+            else
+            {
+                scale = Mathf.Lerp(
+                    overshootScale,
+                    1f,
+                    (t - 0.7f) / 0.3f
+                );
+            }
+
+            transform.localScale = originalScale * scale;
+
+            yield return null;
+        }
+
+        transform.localScale = originalScale;
+    }
+
+    private IEnumerator AnimateDisappear()
+    {
+        if (!IsVisible)
+        {
+            transform.localScale = Vector3.zero;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        Vector3 startScale = transform.localScale;
+
+        while (elapsed < disappearDuration)
+        {
+            // 選択されたら消失を中止
+            if (node.IsActivated)
+            {
+                transform.localScale = originalScale;
+                SetVisible(true);
+                yield break;
+            }
+
+            elapsed += Time.deltaTime;
+
+            float t = Mathf.Clamp01(
+                elapsed / Mathf.Max(0.01f, disappearDuration)
+            );
+
+            transform.localScale = Vector3.Lerp(
+                startScale,
+                Vector3.zero,
+                t
+            );
+
+            yield return null;
+        }
+
+        transform.localScale = Vector3.zero;
+        SetVisible(false);
     }
 
     private void SetVisible(bool visible)

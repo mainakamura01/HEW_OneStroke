@@ -16,7 +16,7 @@ public class NodeManager : MonoBehaviour
     [SerializeField] private int minimumNodes = 3;
 
     [Header("Animation Settings")]
-    [SerializeField] private float shapeDisplayTime = 5.0f;
+    [SerializeField] private float shapeDisplayTime = 0.8f;
 
     private readonly List<Node> activatedNodes = new();
 
@@ -40,31 +40,33 @@ public class NodeManager : MonoBehaviour
         if (node == null || isCompletingShape)
             return;
 
-        // Å‰‚ÌNode‚É–ß‚Á‚Ä‚«‚½ê‡
+        // Å‰‚ÌNode‚ğ‚à‚¤ˆê“x‘I‘ğ‚·‚é‚ÆŠ®¬
         if (activatedNodes.Count >= minimumNodes &&
             activatedNodes[0] == node)
         {
+            if (!IsValidPolygon())
+            {
+                Debug.LogWarning(
+                    "Invalid polygon: crossing lines or zero area."
+                );
+                return;
+            }
+
             CompleteShape();
             return;
         }
 
-        // ‚·‚Å‚ÉG‚ê‚½Node‚È‚ç–³‹
+        // ‚·‚Å‚É‘I‘ğÏ‚İ‚ÌNode‚Í–³‹
         if (activatedNodes.Contains(node))
             return;
 
-        // ’¼‘O‚ÌNode‚ğæ“¾
-        Node previousNode = null;
+        Node previousNode = activatedNodes.Count > 0
+            ? activatedNodes[activatedNodes.Count - 1]
+            : null;
 
-        if (activatedNodes.Count > 0)
-        {
-            previousNode = activatedNodes[activatedNodes.Count - 1];
-        }
-
-        // V‚µ‚¢Node‚ğ“o˜^‚µ‚Ä“_“”
         activatedNodes.Add(node);
         node.Activate();
 
-        // 2‚Â–ÚˆÈ~‚ÌNode‚È‚çü‚ğ¶¬
         if (previousNode != null && lineManager != null)
         {
             lineManager.CreateLine(previousNode, node);
@@ -80,44 +82,25 @@ public class NodeManager : MonoBehaviour
         Node firstNode = activatedNodes[0];
         Node lastNode = activatedNodes[activatedNodes.Count - 1];
 
-        // ÅŒã‚ÌNode‚ÆÅ‰‚ÌNode‚ğ‚Â‚È‚®
         if (lineManager != null)
         {
             lineManager.CreateLine(lastNode, firstNode);
         }
 
-        Debug.Log($"Shape completed! Nodes: {activatedNodes.Count}");
+        Debug.Log(
+            $"Polygon completed! Nodes: {activatedNodes.Count}"
+        );
 
-        // OŠpŒ`‚Ì“à•”‚ğ“h‚è‚Â‚Ô‚·
-        if (activatedNodes.Count == 3 && shapeVisualizer != null)
+        if (shapeVisualizer != null)
         {
-            shapeVisualizer.ShowTriangle(
-                activatedNodes[0],
-                activatedNodes[1],
-                activatedNodes[2]
-            );
-
-            Debug.Log("Triangle visualization created!");
+            shapeVisualizer.ShowPolygon(activatedNodes);
         }
 
-        // OŠpŒ`‚Ì“à‘¤‚É‚¢‚é“G‚ğUŒ‚
-        if (activatedNodes.Count == 3 && triangleDamage != null)
+        if (triangleDamage != null)
         {
-            triangleDamage.Attack(
-                activatedNodes[0],
-                activatedNodes[1],
-                activatedNodes[2]
-            );
+            triangleDamage.AttackPolygon(activatedNodes);
         }
 
-        else
-        {
-            Debug.LogWarning(
-                "Triangle visualization skipped. Check node count and ShapeVisualizer reference."
-            );
-        }
-
-        // ­‚µ‘Ò‚Á‚Ä‚©‚çƒŠƒZƒbƒg
         StartCoroutine(CompleteShapeAnimation());
     }
 
@@ -126,43 +109,102 @@ public class NodeManager : MonoBehaviour
         yield return new WaitForSeconds(shapeDisplayTime);
 
         ResetShape();
-
         isCompletingShape = false;
     }
 
     private void ResetShape()
     {
-        // Node‚ğÂF‚É–ß‚·
         foreach (Node node in activatedNodes)
         {
             if (node != null)
-            {
                 node.ResetNode();
-            }
         }
 
         activatedNodes.Clear();
 
-        // ü‚ğíœ
         if (lineManager != null)
-        {
             lineManager.ClearLines();
-        }
 
-        // OŠpŒ`‚Ì“h‚è‚Â‚Ô‚µ‚ğíœ
         if (shapeVisualizer != null)
-        {
             shapeVisualizer.ClearShape();
-        }
 
         Debug.Log("Shape reset!");
+    }
+
+    private bool IsValidPolygon()
+    {
+        if (activatedNodes.Count < 3)
+            return false;
+
+        List<Vector2> points = new List<Vector2>();
+
+        foreach (Node node in activatedNodes)
+        {
+            Vector3 p = node.transform.position;
+            points.Add(new Vector2(p.x, p.z));
+        }
+
+        // –ÊÏ‚ª‚Ù‚Úƒ[ƒ‚È‚ç–³Œø
+        float area = 0f;
+
+        for (int i = 0; i < points.Count; i++)
+        {
+            Vector2 a = points[i];
+            Vector2 b = points[(i + 1) % points.Count];
+
+            area += a.x * b.y - b.x * a.y;
+        }
+
+        if (Mathf.Abs(area) < 0.01f)
+            return false;
+
+        // —×Ú‚µ‚È‚¢•Ó“¯m‚ÌŒğ·‚ğŠm”F
+        int count = points.Count;
+
+        for (int i = 0; i < count; i++)
+        {
+            Vector2 a1 = points[i];
+            Vector2 a2 = points[(i + 1) % count];
+
+            for (int j = i + 1; j < count; j++)
+            {
+                if (j == i ||
+                    j == (i + 1) % count ||
+                    (j + 1) % count == i)
+                    continue;
+
+                Vector2 b1 = points[j];
+                Vector2 b2 = points[(j + 1) % count];
+
+                if (SegmentsIntersect(a1, a2, b1, b2))
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool SegmentsIntersect(
+        Vector2 a, Vector2 b,
+        Vector2 c, Vector2 d)
+    {
+        float d1 = Cross(a, b, c);
+        float d2 = Cross(a, b, d);
+        float d3 = Cross(c, d, a);
+        float d4 = Cross(c, d, b);
+
+        return d1 * d2 < 0f && d3 * d4 < 0f;
+    }
+
+    private float Cross(Vector2 a, Vector2 b, Vector2 c)
+    {
+        return (b.x - a.x) * (c.y - a.y)
+             - (b.y - a.y) * (c.x - a.x);
     }
 
     private void OnDestroy()
     {
         if (Instance == this)
-        {
             Instance = null;
-        }
     }
 }

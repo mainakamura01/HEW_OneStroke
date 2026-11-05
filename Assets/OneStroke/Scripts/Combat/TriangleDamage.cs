@@ -1,4 +1,5 @@
 
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TriangleDamage : MonoBehaviour
@@ -6,15 +7,21 @@ public class TriangleDamage : MonoBehaviour
     [Header("Damage Settings")]
     [SerializeField] private int damage = 1;
 
-    public void Attack(Node a, Node b, Node c)
+    public void AttackPolygon(IReadOnlyList<Node> nodes)
     {
-        // 3D座標を床の2D座標(XZ)に変換
-        Vector2 pointA = ToXZ(a.transform.position);
-        Vector2 pointB = ToXZ(b.transform.position);
-        Vector2 pointC = ToXZ(c.transform.position);
+        if (nodes == null || nodes.Count < 3)
+            return;
 
-        // シーン内の敵を探す
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        List<Vector2> polygon = new List<Vector2>();
+
+        foreach (Node node in nodes)
+        {
+            Vector3 p = node.transform.position;
+            polygon.Add(new Vector2(p.x, p.z));
+        }
+
+        GameObject[] enemies =
+            GameObject.FindGameObjectsWithTag("Enemy");
 
         foreach (GameObject enemyObject in enemies)
         {
@@ -23,60 +30,71 @@ public class TriangleDamage : MonoBehaviour
             if (enemy == null)
                 continue;
 
-            Vector2 enemyPosition = ToXZ(enemy.transform.position);
+            Vector3 position = enemy.transform.position;
+            Vector2 point = new Vector2(
+                position.x,
+                position.z
+            );
 
-            if (IsInsideTriangle(
-                enemyPosition,
-                pointA,
-                pointB,
-                pointC
-            ))
+            if (IsInsidePolygon(point, polygon))
             {
                 enemy.TakeDamage(damage);
             }
         }
     }
 
-    private Vector2 ToXZ(Vector3 position)
+    private bool IsInsidePolygon(
+        Vector2 point,
+        List<Vector2> polygon)
     {
-        return new Vector2(position.x, position.z);
-    }
+        bool inside = false;
 
-    // 2Dベクトルの外積
-    private float Cross(Vector2 a, Vector2 b, Vector2 p)
-    {
-        return (b.x - a.x) * (p.y - a.y)
-             - (b.y - a.y) * (p.x - a.x);
-    }
+        int count = polygon.Count;
 
-    private bool IsInsideTriangle(
-        Vector2 p,
-        Vector2 a,
-        Vector2 b,
-        Vector2 c
-    )
-    {
-        float d1 = Cross(a, b, p);
-        float d2 = Cross(b, c, p);
-        float d3 = Cross(c, a, p);
-
-        // 3点がほぼ一直線なら三角形ではない
-        if (Mathf.Abs(Cross(a, b, c)) < 0.0001f)
+        for (int i = 0, j = count - 1;
+             i < count;
+             j = i++)
         {
-            return false;
+            Vector2 a = polygon[i];
+            Vector2 b = polygon[j];
+
+            // 点が辺上にある場合も内側として扱う
+            if (IsPointOnSegment(point, a, b))
+                return true;
+
+            bool intersects =
+                ((a.y > point.y) != (b.y > point.y)) &&
+                (point.x <
+                 (b.x - a.x) *
+                 (point.y - a.y) /
+                 (b.y - a.y) + a.x);
+
+            if (intersects)
+                inside = !inside;
         }
 
-        bool hasNegative =
-            d1 < -0.0001f ||
-            d2 < -0.0001f ||
-            d3 < -0.0001f;
+        return inside;
+    }
 
-        bool hasPositive =
-            d1 > 0.0001f ||
-            d2 > 0.0001f ||
-            d3 > 0.0001f;
+    private bool IsPointOnSegment(
+        Vector2 p,
+        Vector2 a,
+        Vector2 b)
+    {
+        float cross =
+            (b.x - a.x) * (p.y - a.y) -
+            (b.y - a.y) * (p.x - a.x);
 
-        // 全て同じ側なら内側
-        return !(hasNegative && hasPositive);
+        if (Mathf.Abs(cross) > 0.01f)
+            return false;
+
+        float dot = Vector2.Dot(p - a, b - a);
+
+        if (dot < 0f)
+            return false;
+
+        float lengthSquared = (b - a).sqrMagnitude;
+
+        return dot <= lengthSquared;
     }
 }
