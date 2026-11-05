@@ -27,6 +27,9 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private float normalDuration = 30f;
     [SerializeField] private float enhancedDuration = 60f;
 
+    [Header("Wave Warning")]
+    [SerializeField] private float enhancedSpawnDelay = 0.5f;
+
     private bool isEnhancedWave = false;
 
     public bool IsEnhancedWave => isEnhancedWave;
@@ -76,6 +79,10 @@ public class EnemySpawner : MonoBehaviour
             isEnhancedWave = true;
             Debug.Log("強化ウェーブ開始！");
 
+            // WARNING表示後、指定した秒数だけ待つ
+            yield return new WaitForSeconds(enhancedSpawnDelay);
+
+            // 敵を出現させる
             SpawnUntilCount(enhancedEnemyCount);
 
             elapsed = 0f;
