@@ -75,6 +75,60 @@ public class NodeManager : MonoBehaviour
         Debug.Log($"Activated nodes: {activatedNodes.Count}");
     }
 
+    public void UndoLastNode()
+    {
+        // 図形完成中は操作を受け付けない
+        if (isCompletingShape)
+            return;
+
+        if (activatedNodes.Count == 0)
+            return;
+
+        int lastIndex = activatedNodes.Count - 1;
+
+        Node lastNode = activatedNodes[lastIndex];
+
+        // 最後のノードをリストから削除
+        activatedNodes.RemoveAt(lastIndex);
+
+        // ノードを青色に戻す
+        if (lastNode != null)
+        {
+            lastNode.ResetNode();
+
+            NodeAppearance appearance =
+                lastNode.GetComponent<NodeAppearance>();
+
+            if (appearance != null)
+            {
+                appearance.RestartVisibility();
+            }
+        }
+
+        // 2つ以上選択されていた場合、最後の線を削除
+        if (activatedNodes.Count > 0 && lineManager != null)
+            lineManager.RemoveLastLine();
+
+        Debug.Log(
+            $"Undo! Remaining nodes: {activatedNodes.Count}"
+        );
+    }
+
+    public void CancelShape()
+    {
+        // 図形完成中は操作を受け付けない
+        if (isCompletingShape)
+            return;
+
+        if (activatedNodes.Count == 0)
+            return;
+
+        ResetShape();
+
+        Debug.Log("Shape selection cancelled!");
+    }
+
+
     private void CompleteShape()
     {
         isCompletingShape = true;

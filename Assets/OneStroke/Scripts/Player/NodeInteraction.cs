@@ -8,16 +8,29 @@ public class NodeInteraction : MonoBehaviour
 
     private void Update()
     {
+        // 左クリック：ノードを選択
         if (Input.GetMouseButtonDown(0))
         {
             TryInteract();
         }
-    }
 
+        // 右クリック：最後のノードを取り消す
+        if (Input.GetMouseButtonDown(1))
+        {
+            NodeManager.Instance?.UndoLastNode();
+        }
+
+        // Escキー：すべてキャンセル
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            NodeManager.Instance?.CancelShape();
+        }
+    }
 
     private void TryInteract()
     {
-        GameObject[] nodes = GameObject.FindGameObjectsWithTag("Node");
+        GameObject[] nodes =
+            GameObject.FindGameObjectsWithTag("Node");
 
         Node nearestNode = null;
         float nearestDistance = interactionRange;
@@ -29,12 +42,11 @@ public class NodeInteraction : MonoBehaviour
             if (node == null)
                 continue;
 
-            NodeAppearance appearance = nodeObject.GetComponent<NodeAppearance>();
+            NodeAppearance appearance =
+                nodeObject.GetComponent<NodeAppearance>();
 
             if (appearance != null && !appearance.IsVisible)
-            {
                 continue;
-            }
 
             float distance = Vector3.Distance(
                 transform.position,
@@ -53,5 +65,4 @@ public class NodeInteraction : MonoBehaviour
             nearestNode.Interact();
         }
     }
-
 }

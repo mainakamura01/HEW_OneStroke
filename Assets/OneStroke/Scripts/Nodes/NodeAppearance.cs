@@ -193,4 +193,44 @@ public class NodeAppearance : MonoBehaviour
             nodeRenderer.enabled = visible;
         }
     }
+
+    public void RestartVisibility()
+    {
+        if (appearanceCoroutine != null)
+        {
+            StopCoroutine(appearanceCoroutine);
+        }
+
+        transform.localScale = originalScale;
+        SetVisible(true);
+
+        appearanceCoroutine = StartCoroutine(
+            RestartVisibilityRoutine()
+        );
+    }
+
+    private IEnumerator RestartVisibilityRoutine()
+    {
+        float timer = 0f;
+
+        while (timer < visibleDuration)
+        {
+            if (node.IsActivated)
+            {
+                // 選択されたら表示を維持する
+                while (node.IsActivated)
+                    yield return null;
+
+                // 再び青色に戻ったら表示時間を再スタート
+                timer = 0f;
+            }
+
+            timer += Time.deltaTime;
+            yield return null;
+        }
+
+        appearanceCoroutine = StartCoroutine(AppearanceLoop());
+    }
+
+
 }

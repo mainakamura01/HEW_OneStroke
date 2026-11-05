@@ -48,6 +48,23 @@ public class LineManager : MonoBehaviour
         Debug.Log($"Line created: {startNode.name} -> {endNode.name}");
     }
 
+    public void RemoveLastLine()
+    {
+        if (lines.Count == 0)
+            return;
+
+        int lastIndex = lines.Count - 1;
+
+        GameObject lastLine = lines[lastIndex];
+
+        lines.RemoveAt(lastIndex);
+
+        if (lastLine != null)
+            Destroy(lastLine);
+
+        Debug.Log("Last line removed!");
+    }
+
     public void ClearLines()
     {
         foreach (GameObject line in lines)
