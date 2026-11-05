@@ -7,9 +7,12 @@ public class EnemySpawner : MonoBehaviour
     [Header("References")]
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private Transform player;
+    [SerializeField] private StageBoundary stageBoundary;
 
     [Header("Spawn Settings")]
     [SerializeField] private float spawnDistance = 8f;
+    [SerializeField] private float boundaryMargin = 1.5f;
+    [SerializeField] private int spawnPositionAttempts = 30;
 
     [Header("Normal Wave")]
     [SerializeField] private int normalEnemyCount = 4;
@@ -25,6 +28,7 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private float enhancedDuration = 60f;
 
     private bool isEnhancedWave = false;
+
     public bool IsEnhancedWave => isEnhancedWave;
 
     private void Start()
@@ -34,10 +38,12 @@ public class EnemySpawner : MonoBehaviour
 
     private IEnumerator WaveRoutine()
     {
-        if (enemyPrefab == null || player == null)
+        if (enemyPrefab == null ||
+            player == null ||
+            stageBoundary == null)
         {
             Debug.LogError(
-                "EnemySpawner: Enemy Prefab or Player is missing!"
+                "EnemySpawner: References are missing!"
             );
             yield break;
         }
@@ -48,14 +54,15 @@ public class EnemySpawner : MonoBehaviour
             isEnhancedWave = false;
             Debug.Log("通常ウェーブ開始！");
 
-            // 生存中の敵が4体になるまで補充
             SpawnUntilCount(normalEnemyCount);
 
             float elapsed = 0f;
 
             while (elapsed < normalDuration)
             {
-                yield return new WaitForSeconds(normalCheckInterval);
+                yield return new WaitForSeconds(
+                    normalCheckInterval
+                );
 
                 elapsed += normalCheckInterval;
 
@@ -69,7 +76,6 @@ public class EnemySpawner : MonoBehaviour
             isEnhancedWave = true;
             Debug.Log("強化ウェーブ開始！");
 
-            // 生存中の敵が12体になるまで追加
             SpawnUntilCount(enhancedEnemyCount);
 
             elapsed = 0f;
@@ -89,7 +95,9 @@ public class EnemySpawner : MonoBehaviour
             }
 
             isEnhancedWave = false;
-            Debug.Log("強化ウェーブ終了！通常に戻ります");
+            Debug.Log(
+                "強化ウェーブ終了！通常に戻ります"
+            );
         }
     }
 
@@ -113,19 +121,10 @@ public class EnemySpawner : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            float angle =
-                startAngle + (360f / count) * i;
-
-            float radians = angle * Mathf.Deg2Rad;
-
-            Vector3 direction = new Vector3(
-                Mathf.Cos(radians),
-                0f,
-                Mathf.Sin(radians)
-            );
-
             Vector3 spawnPosition =
-                player.position + direction * spawnDistance;
+                FindValidSpawnPosition(
+                    startAngle + (360f / count) * i
+                );
 
             Instantiate(
                 enemyPrefab,
@@ -136,7 +135,99 @@ public class EnemySpawner : MonoBehaviour
 
         Debug.Log(
             $"{count}体の敵を出現させました！" +
-            $" 現在のウェーブ: {(isEnhancedWave ? "強化" : "通常")}"
+            $" 現在のウェーブ: " +
+            (isEnhancedWave ? "強化" : "通常")
         );
+    }
+
+    private Vector3 FindValidSpawnPosition(float baseAngle)
+    {
+        // 最初は等間隔の方向を試す
+        // ダメなら別の方向をランダムに試す
+        for (int attempt = 0;
+             attempt < spawnPositionAttempts;
+             attempt++)
+        {
+            float angle = attempt == 0
+                ? baseAngle
+                : Random.Range(0f, 360f);
+
+            float radians = angle * Mathf.Deg2Rad;
+
+            Vector3 direction = new Vector3(
+                Mathf.Cos(radians),
+                0f,
+                Mathf.Sin(radians)
+            );
+
+            Vector3 candidate =
+                player.position + direction * spawnDistance;
+
+            if (IsInsideStage(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        // 有効な方向が見つからなかった場合は
+        // ステージ内に収まるよう座標を補正
+        Vector3 fallbackDirection =
+            (player.position -
+             stageBoundary.transform.position).normalized;
+
+        Vector3 fallbackPosition =
+            player.position - fallbackDirection * spawnDistance;
+
+        return ClampInsideStage(fallbackPosition);
+    }
+
+    private bool IsInsideStage(Vector3 position)
+    {
+        Vector3 local =
+            stageBoundary.transform.InverseTransformPoint(
+                position
+            );
+
+        float limitX = Mathf.Max(
+            0f,
+            stageBoundary.HalfWidth - boundaryMargin
+        );
+
+        float limitZ = Mathf.Max(
+            0f,
+            stageBoundary.HalfDepth - boundaryMargin
+        );
+
+        return
+            Mathf.Abs(local.x) <= limitX &&
+            Mathf.Abs(local.z) <= limitZ;
+    }
+
+    private Vector3 ClampInsideStage(Vector3 position)
+    {
+        Vector3 local =
+            stageBoundary.transform.InverseTransformPoint(
+                position
+            );
+
+        float limitX = Mathf.Max(
+            0f,
+            stageBoundary.HalfWidth - boundaryMargin
+        );
+
+        float limitZ = Mathf.Max(
+            0f,
+            stageBoundary.HalfDepth - boundaryMargin
+        );
+
+        local.x = Mathf.Clamp(
+            local.x, -limitX, limitX
+        );
+
+        local.z = Mathf.Clamp(
+            local.z, -limitZ, limitZ
+        );
+
+        return stageBoundary.transform.TransformPoint(local);
     }
 }

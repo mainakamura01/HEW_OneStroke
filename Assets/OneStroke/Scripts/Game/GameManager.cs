@@ -8,6 +8,10 @@ public class GameManager : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private TMP_Text resultText;
+    [SerializeField] private TMP_Text finalScoreText;
+
+    [Header("References")]
+    [SerializeField] private ScoreManager scoreManager;
 
     private bool isGameEnded = false;
 
@@ -31,6 +35,13 @@ public class GameManager : MonoBehaviour
         if (resultText != null)
         {
             resultText.text = message;
+        }
+
+        if (finalScoreText != null &&
+            scoreManager != null)
+        {
+            finalScoreText.text =
+                $"FINAL SCORE : {scoreManager.CurrentScore:000000}";
         }
 
         if (gameOverPanel != null)

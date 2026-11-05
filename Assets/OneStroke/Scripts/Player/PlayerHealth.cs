@@ -8,6 +8,7 @@ public class PlayerHealth : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private GameManager gameManager;
+    [SerializeField] private DamageFlash damageFlash;
 
     private int currentHP;
     private bool isDead = false;
@@ -30,6 +31,12 @@ public class PlayerHealth : MonoBehaviour
 
         Debug.Log($"Player HP: {currentHP} / {maxHP}");
 
+        // ”í’e‰‰o‚ğÄ¶
+        if (damageFlash != null)
+        {
+            damageFlash.PlayFlash();
+        }
+
         if (currentHP <= 0)
         {
             Die();
@@ -45,12 +52,6 @@ public class PlayerHealth : MonoBehaviour
         if (gameManager != null)
         {
             gameManager.EndGame("GAME OVER");
-        }
-        else
-        {
-            Debug.LogWarning(
-                "PlayerHealth: GameManager is not assigned!"
-            );
         }
     }
 }
