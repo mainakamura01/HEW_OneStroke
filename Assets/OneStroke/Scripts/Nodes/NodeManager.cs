@@ -24,6 +24,8 @@ public class NodeManager : MonoBehaviour
 
     public IReadOnlyList<Node> ActivatedNodes => activatedNodes;
 
+    [SerializeField] private InvalidShapeUI invalidShapeUI;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -41,20 +43,29 @@ public class NodeManager : MonoBehaviour
             return;
 
         // 最初のNodeをもう一度選択すると完成
-        if (activatedNodes.Count >= minimumNodes &&
-            activatedNodes[0] == node)
+
+        if (activatedNodes.Count >= minimumNodes && activatedNodes[0] == node)
         {
             if (!IsValidPolygon())
             {
                 Debug.LogWarning(
                     "Invalid polygon: crossing lines or zero area."
                 );
+
+                if (invalidShapeUI != null)
+                {
+                    invalidShapeUI.ShowWarning(
+                        "線が交差しているか、図形を作れません！\n右クリックで1つ戻ろう"
+                    );
+                }
+
                 return;
             }
 
             CompleteShape();
             return;
         }
+
 
         // すでに選択済みのNodeは無視
         if (activatedNodes.Contains(node))
