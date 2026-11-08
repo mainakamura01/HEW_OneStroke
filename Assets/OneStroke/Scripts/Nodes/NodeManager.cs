@@ -195,6 +195,9 @@ public class NodeManager : MonoBehaviour
 
         yield return new WaitForSeconds(delay);
 
+        // }Œ`‚ªŒõ‚Á‚ÄUŒ‚‚·‚éuŠÔ‚ÉŒø‰Ê‰¹I
+        GameSoundManager.Instance?.PlayPolygonComplete();
+
         // ‚±‚±‚Å‰‚ß‚Ä}Œ`“à•”‚ğ•\¦
         if (shapeVisualizer != null)
         {

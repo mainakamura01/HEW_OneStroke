@@ -57,6 +57,8 @@ public class Node : MonoBehaviour
 
         isActivated = true;
 
+        GameSoundManager.Instance?.PlayNodeActivate();
+
         if (nodeVisualRenderer != null &&
             activeMaterial != null)
         {

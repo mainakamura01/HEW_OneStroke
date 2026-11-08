@@ -27,7 +27,15 @@ public class PlayerHealth : MonoBehaviour
         if (isDead || damage <= 0)
             return;
 
+        int previousHP = currentHP;
+
         currentHP = Mathf.Max(currentHP - damage, 0);
+
+        // ŽÀÛ‚ÉHP‚ªŒ¸‚Á‚½‚Æ‚«‚¾‚¯Œø‰Ê‰¹‚ð–Â‚ç‚·
+        if (currentHP < previousHP)
+        {
+            GameSoundManager.Instance?.PlayPlayerDamage();
+        }
 
         Debug.Log($"Player HP: {currentHP} / {maxHP}");
 
