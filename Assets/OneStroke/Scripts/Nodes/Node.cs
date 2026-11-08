@@ -8,18 +8,39 @@ public class Node : MonoBehaviour
     [SerializeField] private Material inactiveMaterial;
     [SerializeField] private Material activeMaterial;
 
-    private Renderer nodeRenderer;
+    [Header("Visual Reference")]
+    [SerializeField] private Renderer nodeVisualRenderer;
+
     private bool isActivated = false;
 
     public bool IsActivated => isActivated;
 
+    [Header("Activation Effect")]
+    [SerializeField] private NodeActivationEffect activationEffect;
+
     private void Awake()
     {
-        nodeRenderer = GetComponent<Renderer>();
-
-        if (inactiveMaterial != null)
+        if (nodeVisualRenderer == null)
         {
-            nodeRenderer.material = inactiveMaterial;
+            Transform visual = transform.Find("NodeVisual");
+
+            if (visual != null)
+            {
+                nodeVisualRenderer =
+                    visual.GetComponent<Renderer>();
+            }
+        }
+
+        if (nodeVisualRenderer != null &&
+            inactiveMaterial != null)
+        {
+            nodeVisualRenderer.material = inactiveMaterial;
+        }
+
+        if (activationEffect == null)
+        {
+            activationEffect =
+                GetComponentInChildren<NodeActivationEffect>(true);
         }
     }
 
@@ -36,9 +57,16 @@ public class Node : MonoBehaviour
 
         isActivated = true;
 
-        if (activeMaterial != null)
+        if (nodeVisualRenderer != null &&
+            activeMaterial != null)
         {
-            nodeRenderer.material = activeMaterial;
+            nodeVisualRenderer.material = activeMaterial;
+        }
+
+        // 赤くなった瞬間にエフェクト再生！
+        if (activationEffect != null)
+        {
+            activationEffect.PlayEffect();
         }
     }
 
@@ -46,9 +74,10 @@ public class Node : MonoBehaviour
     {
         isActivated = false;
 
-        if (inactiveMaterial != null)
+        if (nodeVisualRenderer != null &&
+            inactiveMaterial != null)
         {
-            nodeRenderer.material = inactiveMaterial;
+            nodeVisualRenderer.material = inactiveMaterial;
         }
     }
 }

@@ -4,6 +4,10 @@ using UnityEngine;
 [RequireComponent(typeof(Node))]
 public class NodeProximityEffect : MonoBehaviour
 {
+    [Header("Visual References")]
+    [SerializeField] private Transform nodeVisual;
+    [SerializeField] private NodeGlowRing glowRing;
+
     [Header("Proximity Settings")]
     [SerializeField] private float detectionRadius = 2.0f;
     [SerializeField] private float enlargedScale = 1.2f;
@@ -13,61 +17,80 @@ public class NodeProximityEffect : MonoBehaviour
     private Node node;
     private NodeAppearance nodeAppearance;
 
-    private Renderer nodeRenderer;
     private Vector3 originalVisualScale;
 
     private void Start()
     {
         node = GetComponent<Node>();
         nodeAppearance = GetComponent<NodeAppearance>();
-        nodeRenderer = GetComponent<Renderer>();
+
+        if (nodeVisual == null)
+            nodeVisual = transform.Find("NodeVisual");
+
+        if (glowRing == null)
+            glowRing = GetComponentInChildren<NodeGlowRing>();
+
+        if (nodeVisual != null)
+            originalVisualScale = nodeVisual.localScale;
 
         GameObject playerObject =
             GameObject.FindGameObjectWithTag("Player");
 
         if (playerObject != null)
-        {
             player = playerObject.transform;
-        }
-
-        if (nodeRenderer != null)
-        {
-            originalVisualScale = transform.localScale;
-        }
     }
 
     private void Update()
     {
-        if (player == null || nodeRenderer == null)
+        if (player == null || nodeVisual == null)
             return;
 
-        // 出現していないノードには反応しない
-        if (nodeAppearance != null && !nodeAppearance.IsVisible)
+        // カウントダウン中は反応しない
+        if (CountdownManager.IsCountingDown)
+        {
+            if (glowRing != null)
+                glowRing.SetVisible(false);
+
             return;
+        }
+
+        // 非表示中はリングを消す
+        if (nodeAppearance != null &&
+            !nodeAppearance.IsVisible)
+        {
+            nodeVisual.localScale = originalVisualScale;
+
+            if (glowRing != null)
+                glowRing.SetVisible(false);
+
+            return;
+        }
 
         Vector3 nodePosition = transform.position;
         Vector3 playerPosition = player.position;
 
-        // 水平方向の距離だけを見る
         nodePosition.y = 0f;
         playerPosition.y = 0f;
 
-        float distance = Vector3.Distance(
-            nodePosition,
-            playerPosition
-        );
+        float distance =
+            Vector3.Distance(nodePosition, playerPosition);
 
         bool isNear =
             distance <= detectionRadius &&
             !node.IsActivated;
 
-        float targetScale = isNear ? enlargedScale : 1f;
+        Vector3 targetScale =
+            originalVisualScale *
+            (isNear ? enlargedScale : 1f);
 
-        // 現在のスケールから滑らかに変化
-        transform.localScale = Vector3.Lerp(
-            transform.localScale,
-            originalVisualScale * targetScale,
+        nodeVisual.localScale = Vector3.Lerp(
+            nodeVisual.localScale,
+            targetScale,
             Time.deltaTime * animationSpeed
         );
+
+        // 近づいたらリングを表示
+        if (glowRing != null)
+            glowRing.SetVisible(isNear);
     }
 }

@@ -29,7 +29,17 @@ public class NodeAppearance : MonoBehaviour
     private void Awake()
     {
         node = GetComponent<Node>();
-        renderers = GetComponentsInChildren<Renderer>();
+
+        Transform visual = transform.Find("NodeVisual");
+
+        if (visual != null)
+        {
+            renderers = visual.GetComponentsInChildren<Renderer>(true);
+        }
+        else
+        {
+            renderers = GetComponentsInChildren<Renderer>();
+        }
 
         originalScale = transform.localScale;
     }
