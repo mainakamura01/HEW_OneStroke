@@ -1,4 +1,5 @@
 
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,6 +8,20 @@ public class ShapeVisualizer : MonoBehaviour
     [Header("Shape Settings")]
     [SerializeField] private Material shapeMaterial;
     [SerializeField] private float shapeHeight = 0.12f;
+
+    [Header("Shape Flash")]
+    [SerializeField]
+    private Color flashColor =
+    new Color(0.85f, 0.98f, 1f, 0.9f);
+
+    [SerializeField]
+    private Color fadeColor =
+        new Color(0.15f, 0.8f, 1f, 0f);
+
+    [SerializeField] private float fadeDuration = 0.4f;
+
+    private Coroutine fadeCoroutine;
+    private Material currentShapeMaterial;
 
     private GameObject currentShape;
 
@@ -73,7 +88,17 @@ public class ShapeVisualizer : MonoBehaviour
         meshFilter.mesh = mesh;
 
         if (shapeMaterial != null)
-            meshRenderer.material = shapeMaterial;
+        {
+            currentShapeMaterial = new Material(shapeMaterial);
+            meshRenderer.sharedMaterial = currentShapeMaterial;
+
+            currentShapeMaterial.SetColor(
+                "_BaseColor",
+                flashColor
+            );
+
+            fadeCoroutine = StartCoroutine(FadeShape());
+        }
     }
 
     private List<int> Triangulate(List<Vector2> points)
@@ -211,10 +236,54 @@ public class ShapeVisualizer : MonoBehaviour
 
     public void ClearShape()
     {
+        if (fadeCoroutine != null)
+        {
+            StopCoroutine(fadeCoroutine);
+            fadeCoroutine = null;
+        }
+
         if (currentShape != null)
         {
             Destroy(currentShape);
             currentShape = null;
         }
+
+        if (currentShapeMaterial != null)
+        {
+            Destroy(currentShapeMaterial);
+            currentShapeMaterial = null;
+        }
     }
+
+    private IEnumerator FadeShape()
+    {
+        float elapsed = 0f;
+        float duration = Mathf.Max(0.01f, fadeDuration);
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            Color color = Color.Lerp(
+                flashColor,
+                fadeColor,
+                t
+            );
+
+            if (currentShapeMaterial != null)
+            {
+                currentShapeMaterial.SetColor(
+                    "_BaseColor",
+                    color
+                );
+            }
+
+            yield return null;
+        }
+
+        fadeCoroutine = null;
+    }
+
 }

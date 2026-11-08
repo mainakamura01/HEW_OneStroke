@@ -11,12 +11,16 @@ public class NodeManager : MonoBehaviour
     [SerializeField] private LineManager lineManager;
     [SerializeField] private ShapeVisualizer shapeVisualizer;
     [SerializeField] private TriangleDamage triangleDamage;
+    [SerializeField] private PolygonParticleEffect polygonParticleEffect;
 
     [Header("Shape Settings")]
     [SerializeField] private int minimumNodes = 3;
 
     [Header("Animation Settings")]
     [SerializeField] private float shapeDisplayTime = 0.8f;
+
+    [Header("Attack Timing")]
+    [SerializeField] private float attackDelay = 0.35f;
 
     private readonly List<Node> activatedNodes = new();
 
@@ -140,6 +144,7 @@ public class NodeManager : MonoBehaviour
     }
 
 
+
     private void CompleteShape()
     {
         isCompletingShape = true;
@@ -147,35 +152,81 @@ public class NodeManager : MonoBehaviour
         Node firstNode = activatedNodes[0];
         Node lastNode = activatedNodes[activatedNodes.Count - 1];
 
+        // 図形完成時の位置で攻撃対象を確定する
+        List<Enemy> lockedTargets = new();
+
+        if (triangleDamage != null)
+        {
+            lockedTargets =
+                triangleDamage.FindTargets(activatedNodes);
+        }
+
         if (lineManager != null)
         {
+            // 最後の線をつないで図形を閉じる
             lineManager.CreateLine(lastNode, firstNode);
+
+            // 元の線を暗くする
+            lineManager.DimCompletedLines();
+
+            // 二重発光で一周する
+            lineManager.PlayTravelingLight();
         }
 
         Debug.Log(
             $"Polygon completed! Nodes: {activatedNodes.Count}"
         );
 
+        // 内部表示と攻撃は、光が一周した後に実行
+        StartCoroutine(
+            CompleteShapeAnimation(lockedTargets)
+        );
+    }
+
+    private IEnumerator CompleteShapeAnimation(
+        List<Enemy> lockedTargets)
+    {
+        // 二重発光が一周するのを待つ
+        float delay = Mathf.Clamp(
+            attackDelay,
+            0f,
+            Mathf.Max(0f, shapeDisplayTime)
+        );
+
+        yield return new WaitForSeconds(delay);
+
+        // ここで初めて図形内部を表示
         if (shapeVisualizer != null)
         {
             shapeVisualizer.ShowPolygon(activatedNodes);
         }
 
-        if (triangleDamage != null)
+        if (polygonParticleEffect != null)
         {
-            triangleDamage.AttackPolygon(activatedNodes);
+            polygonParticleEffect.PlayBurst(activatedNodes);
         }
 
-        StartCoroutine(CompleteShapeAnimation());
-    }
+        // 完成時に確定していた敵にダメージ
+        if (triangleDamage != null)
+        {
+            triangleDamage.DamageTargets(lockedTargets);
+        }
 
-    private IEnumerator CompleteShapeAnimation()
-    {
-        yield return new WaitForSeconds(shapeDisplayTime);
+        Debug.Log("Polygon attack activated!");
+
+        // 図形完成から合計shapeDisplayTime秒で消す
+        float remainingTime =
+            Mathf.Max(0f, shapeDisplayTime - delay);
+
+        if (remainingTime > 0f)
+        {
+            yield return new WaitForSeconds(remainingTime);
+        }
 
         ResetShape();
         isCompletingShape = false;
     }
+
 
     private void ResetShape()
     {

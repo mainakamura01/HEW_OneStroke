@@ -7,15 +7,21 @@ public class TriangleDamage : MonoBehaviour
     [Header("Damage Settings")]
     [SerializeField] private int damage = 1;
 
-    public void AttackPolygon(IReadOnlyList<Node> nodes)
+    // 図形完成時に攻撃対象だけを確定する
+    public List<Enemy> FindTargets(IReadOnlyList<Node> nodes)
     {
-        if (nodes == null || nodes.Count < 3)
-            return;
+        List<Enemy> targets = new();
 
-        List<Vector2> polygon = new List<Vector2>();
+        if (nodes == null || nodes.Count < 3)
+            return targets;
+
+        List<Vector2> polygon = new();
 
         foreach (Node node in nodes)
         {
+            if (node == null)
+                return targets;
+
             Vector3 p = node.transform.position;
             polygon.Add(new Vector2(p.x, p.z));
         }
@@ -31,6 +37,7 @@ public class TriangleDamage : MonoBehaviour
                 continue;
 
             Vector3 position = enemy.transform.position;
+
             Vector2 point = new Vector2(
                 position.x,
                 position.z
@@ -38,9 +45,38 @@ public class TriangleDamage : MonoBehaviour
 
             if (IsInsidePolygon(point, polygon))
             {
+                targets.Add(enemy);
+            }
+        }
+
+        Debug.Log(
+            $"Polygon targets locked: {targets.Count}"
+        );
+
+        return targets;
+    }
+
+    // 確定した敵に、後からダメージを与える
+    public void DamageTargets(List<Enemy> targets)
+    {
+        if (targets == null)
+            return;
+
+        foreach (Enemy enemy in targets)
+        {
+            // 発動前に敵が消えていた場合は無視
+            if (enemy != null)
+            {
                 enemy.TakeDamage(damage);
             }
         }
+    }
+
+    // 既存の即時攻撃も残しておく
+    public void AttackPolygon(IReadOnlyList<Node> nodes)
+    {
+        List<Enemy> targets = FindTargets(nodes);
+        DamageTargets(targets);
     }
 
     private bool IsInsidePolygon(
@@ -58,7 +94,7 @@ public class TriangleDamage : MonoBehaviour
             Vector2 a = polygon[i];
             Vector2 b = polygon[j];
 
-            // 点が辺上にある場合も内側として扱う
+            // 辺の上も内側として扱う
             if (IsPointOnSegment(point, a, b))
                 return true;
 

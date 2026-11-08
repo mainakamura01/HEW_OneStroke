@@ -39,8 +39,8 @@ public class WaveUI : MonoBehaviour
         if (waveText != null)
         {
             waveText.text = isEnhanced
-                ? "ENHANCED WAVE"
-                : "NORMAL WAVE";
+                ? "ENHANCED"
+                : "NORMAL";
         }
 
         if (waveBackground != null)

@@ -4,7 +4,7 @@ using UnityEngine;
 public class EnemyMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 2.0f;
+    [SerializeField] private float moveSpeed = 2.6f;
     [SerializeField] private float stopDistance = 1.5f;
 
     [Header("Separation Settings")]
@@ -30,6 +30,10 @@ public class EnemyMovement : MonoBehaviour
 
     private void Update()
     {
+        // カウントダウン中は敵の移動を停止
+        if (CountdownManager.IsCountingDown)
+            return;
+
         if (player == null)
             return;
 

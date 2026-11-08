@@ -33,7 +33,7 @@ public class ScoreManager : MonoBehaviour
         if (scoreText != null)
         {
             scoreText.text =
-                $"SCORE\n{currentScore:000000}";
+                $"{currentScore:000000}";
         }
     }
 }

@@ -24,6 +24,10 @@ public class GameTimer : MonoBehaviour
 
     private void Update()
     {
+        // カウントダウン中はタイマーを進めない
+        if (CountdownManager.IsCountingDown)
+            return;
+
         if (!isTimerRunning)
             return;
 
@@ -34,11 +38,11 @@ public class GameTimer : MonoBehaviour
             remainingTime = 0f;
             isTimerRunning = false;
 
-            Debug.Log("TIME UP! ゲーム終了！");
+            Debug.Log("GAME CLEAR! 制限時間を生き残った！");
 
             if (gameManager != null)
             {
-                gameManager.EndGame("TIME UP");
+                gameManager.EndGame("GAME CLEAR!");
             }
         }
 

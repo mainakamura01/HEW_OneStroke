@@ -20,9 +20,7 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
 
         if (gameOverPanel != null)
-        {
             gameOverPanel.SetActive(false);
-        }
     }
 
     public void EndGame(string message)
@@ -35,6 +33,17 @@ public class GameManager : MonoBehaviour
         if (resultText != null)
         {
             resultText.text = message;
+
+            if (message == "GAME CLEAR!")
+            {
+                // ゲームクリア：ゴールド
+                resultText.color = new Color32(255, 226, 140, 255);
+            }
+            else
+            {
+                // ゲームオーバー：ピンク
+                resultText.color = new Color32(255, 150, 165, 255);
+            }
         }
 
         if (finalScoreText != null &&
@@ -61,5 +70,12 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(
             SceneManager.GetActiveScene().buildIndex
         );
+    }
+
+    public void ReturnToTitle()
+    {
+        Time.timeScale = 1f;
+
+        SceneManager.LoadScene("TitleScene");
     }
 }
