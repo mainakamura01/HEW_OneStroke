@@ -2534,7 +2534,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 020106bb45778144286d573ec5f2780f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameTimer
-  gameDuration: 60
+  gameDuration: 180
   timerText: {fileID: 937118317}
   gameManager: {fileID: 845387293}
 --- !u!4 &949026870
@@ -3175,7 +3175,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 4b7061644d73fb44bbb8437729700bee, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.05
+  m_Volume: 0.2
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -4361,9 +4361,9 @@ MonoBehaviour:
   nodeActivateSE: {fileID: 8300000, guid: 3ea9e9ea99728ec48bb717c95c0ae27e, type: 3}
   polygonCompleteSE: {fileID: 8300000, guid: 3c68ecca1638e2a4b8c425e31b31a7ea, type: 3}
   playerDamageSE: {fileID: 8300000, guid: 5d5fe49913e22fa4fb6eb42d89019cdd, type: 3}
-  nodeVolume: 0.7
+  nodeVolume: 0.8
   polygonVolume: 0.8
-  damageVolume: 0.5
+  damageVolume: 0.7
 --- !u!82 &1475990953
 AudioSource:
   m_ObjectHideFlags: 0
